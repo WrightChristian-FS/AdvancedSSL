@@ -1,54 +1,46 @@
 const express = require("express");
-const router = express.Router(); 
-
-let quizzes = require('../models/quizzes'); 
-
+const router = express.Router();
+const { Quiz } = require("../models/quiz");
 const bodyParser = require("body-parser");
-router.use(bodyParser.urlencoded({extended: false}))
+router.use(bodyParser.urlencoded({ extended: false }));
 
+router.get("/", async (req, res) => {
+  try {
+    const quizzes = await Quiz.findAll();
+    res.json(quizzes);
+  } catch (error) {
+    // Put a catch here to see if this works so far
+    res.status(500).json({ error: "Failed to fetch quizzes" });
+  }
+});
 
-// RESTFUL API 
-router.get('/', (req, res) => { 
-    res.json(quizzes)
-})
+router.post("/", async (req, res) => {
+  const { name } = req.body;
+  const quiz = await Quiz.create({ name });
+  res.json(quiz);
+});
 
-router.post('/', (req, res) => { 
-    const {id, name} = req.body; 
-    quizzes.push({
-        id: Number(id), 
-        name 
-    })
-    res.json(quizzes)
-})
+router.get("/:id", async (req, res) => {
+  const quiz = await Quiz.findByPk(req.params.id);
+  res.json(quiz);
+});
 
-router.get('/:id', (req, res) => { 
-    const id = req.params.id; 
-    const quiz = quizzes.find(q => q.id == id)
-    res.json(quiz)
-})
+router.post("/:id", async (req, res) => {
+  const { name } = req.body;
+  const { id } = req.params;
+  const quiz = await Quiz.update({ name }, { where: { id } });
+  res.json(quizzes);
+});
 
-router.post('/:id', (req, res) => { 
-    const id = Number(req.params.id); 
-    
-    quizzes.map((q) => {
-        if (id === q.id) { 
-            q.name = req.body.name
-            return q
-        }
-    })
-    res.json(quizzes)
-})
+router.delete("/:id", async (req, res) => {
+  const { id } = req.params;
 
-router.delete('/:id', (req, res) => { 
-    
-    // Convert the ID to an integer 
-    const id = Number(req.params.id); 
+  const deleted = await Quiz.destroy({
+    where: { id },
+  });
 
-    // Filter the results to find out which is not equal to the input volume 
-    quizzes = quizzes.filter(q => q.id != id)
+  res.json({ deleted })
+  res.redirect('/quizzes')
+});
 
-    // Return a json object to render 
-    res.json(quizzes);     
-}) 
-
-module.exports = router
+module.exports = router;
